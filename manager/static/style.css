@@ -109,9 +109,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .form-row textarea { min-height: 90px; resize: vertical; font-family: 'Consolas', monospace; }
 .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
-.qr-wrap { text-align: center; max-width: 420px; }
+.qr-wrap { text-align: center; max-width: 560px; }
 .qr-wrap img { width: 280px; height: 280px; background: #fff; border-radius: 12px; padding: 8px; }
 .qr-status { margin: 14px 0; font-size: 14px; }
+.panel { text-align: left; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.panel h3 { margin-top: 0; }
+.chk-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 4px; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.chk input { width: 16px; height: 16px; }
+.muted { color: var(--muted); font-size: 12px; }
 .switch { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 .toast {
   position: fixed; bottom: 20px; right: 20px; background: var(--panel2);

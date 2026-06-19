@@ -13,8 +13,11 @@ from zalo_qr_login import ZaloQRLogin, ZaloQRLoginError
 
 
 class QRSession:
-    def __init__(self, bot_id: str):
+    def __init__(self, bot_id: str, target_ids: list[str] | None = None):
         self.bot_id = bot_id
+        # bots that the resulting session will be written into
+        self.target_ids = target_ids or [bot_id]
+        self.applied: list[str] = []
         self.state = "starting"  # starting | waiting_scan | success | error | cancelled
         self.message = ""
         self.qr_image_b64: str | None = None
@@ -31,17 +34,27 @@ class QRManager:
         self.sessions: dict[str, QRSession] = {}
         self._lock = threading.Lock()
 
-    def start(self, bot_id: str) -> QRSession:
-        bot = registry.get_bot(bot_id)
-        if not bot:
-            raise ValueError("Bot khong ton tai")
+    def start(self, bot_id: str, target_ids: list[str] | None = None) -> QRSession:
+        """Start a QR login. bot_id == "__all__" logs in once and applies the
+        resulting session to every bot in target_ids (default: all bots)."""
+        if bot_id == "__all__":
+            ids = target_ids or [b["id"] for b in registry.all_bots()]
+            ids = [i for i in ids if registry.get_bot(i)]
+            if not ids:
+                raise ValueError("Khong co bot nao de ap dung")
+            targets, proxy_id = ids, ids[0]
+        else:
+            bot = registry.get_bot(bot_id)
+            if not bot:
+                raise ValueError("Bot khong ton tai")
+            targets, proxy_id = [bot_id], bot_id
         with self._lock:
             old = self.sessions.get(bot_id)
             if old:
                 old.stop()
-            sess = QRSession(bot_id)
+            sess = QRSession(bot_id, targets)
             self.sessions[bot_id] = sess
-        threading.Thread(target=self._run, args=(bot, sess), daemon=True).start()
+        threading.Thread(target=self._run, args=(sess, proxy_id), daemon=True).start()
         return sess
 
     def get(self, bot_id: str) -> QRSession | None:
@@ -54,10 +67,9 @@ class QRManager:
             sess.state = "cancelled"
             sess.message = "Da huy."
 
-    def _run(self, bot: dict, sess: QRSession) -> None:
-        qr_path = os.path.join(registry.SESSION_DIR, f"{bot['id']}_qr.png")
-        ov = registry.read_overlay(bot["id"])
-        proxy = ov.get("proxy") or None
+    def _run(self, sess: QRSession, proxy_id: str) -> None:
+        qr_path = os.path.join(registry.SESSION_DIR, f"{sess.bot_id}_qr.png")
+        proxy = registry.read_overlay(proxy_id).get("proxy") or None
 
         def on_qr(path: str) -> None:
             with open(path, "rb") as f:
@@ -68,11 +80,23 @@ class QRManager:
         try:
             client = ZaloQRLogin(proxy=proxy)
             result = client.login(qr_path=qr_path, on_qr_generated=on_qr, stop=lambda: sess._stop)
-            self._apply_session(bot, result)
+            applied: list[str] = []
+            for bid in sess.target_ids:
+                b = registry.get_bot(bid)
+                if not b:
+                    continue
+                self._apply_session(b, result)
+                applied.append(b["name"])
+            sess.applied = applied
             sess.result = {k: v for k, v in result.items() if k != "cookies"}
             sess.result["cookie_count"] = len(result.get("cookies", {}))
+            sess.result["applied_to"] = applied
             sess.state = "success"
-            sess.message = f"Dang nhap thanh cong: {result.get('name')}"
+            if len(applied) > 1:
+                sess.message = (f"Dang nhap thanh cong ({result.get('name')}). "
+                                f"Da ap dung cho {len(applied)} bot: {', '.join(applied)}")
+            else:
+                sess.message = f"Dang nhap thanh cong: {result.get('name')}"
         except ZaloQRLoginError as e:
             sess.state = "error"
             sess.message = str(e)

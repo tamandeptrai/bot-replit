@@ -139,15 +139,95 @@ function renderQR() {
   const lastHtml = last
     ? `<p class="hint">Lan dang nhap gan nhat: <b>${escapeHtml(last.name || "?")}</b> (uid ${escapeHtml(last.uid || "?")}) luc ${escapeHtml(last.at || "")}</p>`
     : "";
+  const checks = bots.map((x) =>
+    `<label class="chk"><input type="checkbox" class="qrAllBot" value="${escapeAttr(x.id)}" checked /> ${escapeHtml(x.config.name_bot || x.name)} <span class="muted">(${x.type})</span></label>`
+  ).join("");
   $("content").innerHTML = `
     <div class="qr-wrap">
-      <h3>Dang nhap Zalo bang QR</h3>
-      <p class="hint">Bam nut ben duoi, sau do mo Zalo tren dien thoai cua tai khoan bot nay &rarr; Quet QR. Cookie + imei moi se duoc ghi vao bot, sua loi het han + khong nhan lenh.</p>
+      <div class="panel">
+        <h3>Dang nhap 1 lan &rarr; ap dung cho NHIEU bot</h3>
+        <p class="hint">Quet QR 1 lan, cookie + imei moi se tu ghi vao tat ca bot duoc chon ben duoi (cac bot se dung chung 1 tai khoan Zalo vua quet). Sua het 1 luot loi "het han" + "khong nhan lenh".</p>
+        <div class="chk-list">${checks}</div>
+        <div id="qrAreaAll"></div>
+        <button class="primary" id="btnQrAll" style="margin-top:12px">Dang nhap QR cho cac bot da chon</button>
+        <hr style="border-color:var(--border);margin:18px 0" />
+        <p class="hint">Hoac dan thu cong cookie + imei roi ap dung 1 lan cho cac bot da chon:</p>
+        <div class="form-row"><label>IMEI (de trong = giu nguyen imei tung bot)</label>
+          <input id="f_imei_all" placeholder="vd: 1a2b3c..." /></div>
+        <div class="form-row"><label>Cookie (chuoi "k=v; k=v" hoac JSON)</label>
+          <textarea id="f_cookie_all" placeholder="dan cookie o day"></textarea></div>
+        <button id="btnApplyAll">Ap dung cookie + imei cho cac bot da chon</button>
+      </div>
+      <hr style="border-color:var(--border);margin:22px 0" />
+      <h3>Chi dang nhap rieng cho bot nay: ${escapeHtml(b.config.name_bot || b.name)}</h3>
+      <p class="hint">Quet QR va chi ghi phien moi vao rieng bot nay.</p>
       ${lastHtml}
       <div id="qrArea"></div>
-      <button class="primary" id="btnQrStart" style="margin-top:14px">Bat dau dang nhap QR</button>
+      <button class="primary" id="btnQrStart" style="margin-top:12px">Bat dau dang nhap QR</button>
     </div>`;
   $("btnQrStart").onclick = startQR;
+  $("btnQrAll").onclick = startQRAll;
+  $("btnApplyAll").onclick = applySessionAll;
+}
+
+function selectedAllBotIds() {
+  return Array.from(document.querySelectorAll(".qrAllBot:checked")).map((e) => e.value);
+}
+
+async function startQRAll() {
+  const ids = selectedAllBotIds();
+  if (!ids.length) { toast("Chon it nhat 1 bot.", true); return; }
+  $("btnQrAll").disabled = true;
+  $("qrAreaAll").innerHTML = `<div class="qr-status">Dang tao ma QR...</div>`;
+  try {
+    await api(`/api/qr/start_all`, "POST", { bot_ids: ids });
+    pollQRAll();
+  } catch (e) {
+    toast("Loi: " + e.message, true);
+    $("btnQrAll").disabled = false;
+  }
+}
+
+function pollQRAll() {
+  qrTimer = setInterval(async () => {
+    let s;
+    try { s = await api(`/api/qr/status_all`); } catch (e) { return; }
+    const area = $("qrAreaAll");
+    if (!area) { stopQrPoll(); return; }
+    let html = "";
+    if (s.qr_image && (s.state === "waiting_scan" || s.state === "starting")) {
+      html += `<img src="data:image/png;base64,${s.qr_image}" alt="QR" />`;
+    }
+    html += `<div class="qr-status">${escapeHtml(s.message || s.state)}</div>`;
+    area.innerHTML = html;
+    if (s.state === "success") {
+      stopQrPoll();
+      toast("Da dang nhap + ap dung cho cac bot da chon.");
+      $("btnQrAll").disabled = false;
+      loadBots();
+    } else if (s.state === "error" || s.state === "cancelled") {
+      stopQrPoll();
+      $("btnQrAll").disabled = false;
+    }
+  }, 1500);
+}
+
+async function applySessionAll() {
+  const ids = selectedAllBotIds();
+  if (!ids.length) { toast("Chon it nhat 1 bot.", true); return; }
+  const cookie = val("f_cookie_all");
+  if (!cookie) { toast("Chua co cookie de ap dung.", true); return; }
+  $("btnApplyAll").disabled = true;
+  try {
+    const r = await api(`/api/apply_session_all`, "POST",
+      { cookie, imei: val("f_imei_all"), bot_ids: ids });
+    toast(`Da ap dung cho ${r.count} bot.`);
+    await refreshDetail();
+  } catch (e) {
+    toast("Loi: " + e.message, true);
+  } finally {
+    $("btnApplyAll").disabled = false;
+  }
 }
 
 async function startQR() {

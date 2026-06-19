@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -109,6 +110,30 @@ def apply_settings(bot: dict, body: dict) -> None:
                 parse_cookie_input(cookie_raw), imei or "")
 
 
+def apply_session_to_bots(cookies: dict, imei: str, bot_ids: list) -> list:
+    """Write the same cookies (+imei) into many bots at once. Empty imei keeps
+    each bot's current imei. Returns the list of applied bot names."""
+    applied = []
+    for bid in bot_ids:
+        bot = registry.get_bot(bid)
+        if not bot:
+            continue
+        imei_final = imei or registry.current_imei(bot)
+        if bot["type"] == "python":
+            config_writer.write_python_session(
+                os.path.join(bot["abs_dir"], bot["config_py"]), cookies, imei_final)
+        else:
+            config_writer.write_node_session(
+                os.path.join(bot["abs_dir"], bot["cookie_txt"]),
+                os.path.join(bot["abs_dir"], bot["config_js"]),
+                cookies, imei_final)
+        registry.write_overlay(bid, {
+            "last_login": {"name": "thu cong", "uid": "",
+                           "at": datetime.now(timezone.utc).isoformat()}})
+        applied.append(bot["name"])
+    return applied
+
+
 # --------------------------------------------------------------------------
 # HTTP handler
 # --------------------------------------------------------------------------
@@ -178,6 +203,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._file(os.path.join(HERE, "static", os.path.basename(rel)))
         if path == "/api/bots":
             return self._json({"bots": [bot_payload(b) for b in registry.all_bots()]})
+        if path == "/api/qr/status_all":
+            sess = qr_manager.get("__all__")
+            if not sess:
+                return self._json({"state": "idle", "message": "Chua bat dau dang nhap QR."})
+            return self._json({
+                "state": sess.state, "message": sess.message,
+                "qr_image": sess.qr_image_b64, "result": sess.result,
+            })
 
         m = re.match(r"^/api/bots/([^/]+)(/.*)?$", path)
         if m:
@@ -208,6 +241,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/qr/start_all":
+            body = self._read_body()
+            try:
+                sess = qr_manager.start("__all__", body.get("bot_ids"))
+            except ValueError as e:
+                return self._json({"detail": str(e)}, 400)
+            return self._json({"ok": True, "state": sess.state, "targets": sess.target_ids})
+        if path == "/api/qr/cancel_all":
+            qr_manager.cancel("__all__")
+            return self._json({"ok": True})
+        if path == "/api/apply_session_all":
+            body = self._read_body()
+            cookies = parse_cookie_input(body.get("cookie", ""))
+            if not cookies:
+                return self._json({"detail": "Chua co cookie de ap dung."}, 400)
+            ids = body.get("bot_ids") or [b["id"] for b in registry.all_bots()]
+            applied = apply_session_to_bots(cookies, body.get("imei", ""), ids)
+            return self._json({"ok": True, "applied": applied, "count": len(applied)})
         m = re.match(r"^/api/bots/([^/]+)(/.*)?$", path)
         if not m:
             return self._json({"detail": "Not found"}, 404)

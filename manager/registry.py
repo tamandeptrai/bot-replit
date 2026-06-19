@@ -132,6 +132,17 @@ def read_config_status(bot: dict) -> dict:
     return status
 
 
+def current_imei(bot: dict) -> str:
+    """Read the imei currently written in this bot's config (empty if none)."""
+    if bot["type"] == "python":
+        cfg = _safe_read(os.path.join(bot["abs_dir"], bot["config_py"]))
+        m = re.search(r'IMEI\s*=\s*"([^"]*)"', cfg)
+        return m.group(1) if m else ""
+    cfg = _safe_read(os.path.join(bot["abs_dir"], bot["config_js"]))
+    m = re.search(r'imei\s*:\s*"([^"]*)"', cfg)
+    return m.group(1) if m else ""
+
+
 # --------------------------------------------------------------------------
 # Command scanning
 # --------------------------------------------------------------------------
