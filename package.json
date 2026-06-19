@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index",
     "login": "node login",
-    "test": "node --trace-warnings --use_strict --async-stack-traces mirai"
+    "test": "jest --coverage --forceExit"
   },
   "repository": {
     "type": "git",
@@ -86,7 +86,12 @@
   },
   "homepage": "https://github.com/chungdat02/Mirai-V2#readme",
   "devDependencies": {
+    "jest": "^30.4.2",
     "node": "^14.21.3"
   },
-  "keywords": []
+  "keywords": [],
+  "jest": {
+    "testMatch": ["**/__tests__/**/*.test.js"],
+    "testPathIgnorePatterns": ["/node_modules/"]
+  }
 }
