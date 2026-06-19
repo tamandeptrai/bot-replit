@@ -1,0 +1,15 @@
+# Manager runtime state (per-bot overlays, logs, QR images) — may contain
+# session hints; never commit.
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

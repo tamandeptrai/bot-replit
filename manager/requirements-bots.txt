@@ -1,0 +1,28 @@
+# Phụ thuộc gộp cho 3 bot Python (hhh-pycon, betiencute, botksang).
+# Cài 1 lần để các bot Python chạy được:
+#   pip install -r requirements-bots.txt
+# (Cần mạng tới PyPI — xem README phần "Lưu ý mạng".)
+aiohttp
+attrs
+beautifulsoup4
+cffi
+colorama
+deep_translator
+emoji
+fake_useragent
+ffmpeg-python
+gtts
+munch
+pillow
+psutil
+pydub
+pyfiglet
+pycryptodome
+pystyle
+pytz
+regex
+requests
+urllib3
+websocket-client
+websockets
+yt-dlp
