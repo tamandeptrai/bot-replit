@@ -1,3 +1,6 @@
+const { createGetText } = require('../utils/getText');
+const { buildCommandObj } = require('../utils/commandObj');
+
 module.exports = function ({ api, models, Users, Threads, Currencies }) {
     return function (event ) {
         if (!event.messageReply) return;
@@ -10,30 +13,12 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             const handleNeedExec = commands.get(indexOfMessage.name);
             if (!handleNeedExec) return api.sendMessage(global.getText('handleReply', 'missingValue'), threadID, messageID);
             try {
-                var getText2;
-                if (handleNeedExec.languages && typeof handleNeedExec.languages == 'object') 
-                	getText2 = (...value) => {
-                    const reply = handleNeedExec.languages || {};
-                    if (!reply.hasOwnProperty(global.config.language)) 
-                    	return api.sendMessage(global.getText('handleCommand', 'notFoundLanguage', handleNeedExec.config.name), threadID, messageID );
-                    var lang = handleNeedExec.languages[global.config.language][value[0]] || '';
-                    for (var i = value.length; i > -0x4 * 0x4db + 0x6d * 0x55 + -0x597 * 0x3; i--) {
-                        const expReg = RegExp('%' + i, 'g');
-                        lang = lang.replace(expReg, value[i]);
-                    }
-                    return lang;
-                };
-                else getText2 = () => {};
-                const Obj = {};
-                Obj.api = api
-                Obj.event = event 
-                Obj.models = models
-                Obj.Users = Users
-                Obj.Threads = Threads 
-                Obj.Currencies = Currencies
-                Obj.handleReply = indexOfMessage
-                Obj.models = models
-                Obj.getText = getText2
+                const getText2 = createGetText(handleNeedExec);
+                const Obj = buildCommandObj({
+                    api, event, models, Users, Threads, Currencies,
+                    getText: getText2,
+                    extra: { handleReply: indexOfMessage }
+                });
                 handleNeedExec.handleReply(Obj);
                 return;
             } catch (error) {
