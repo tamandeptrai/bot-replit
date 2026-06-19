@@ -51,7 +51,7 @@ module.exports = function ({  api, models }) {
 						love: t.significant_other || null,
 						quotes: t.quotes || null,
 						website: t.website || null,
-						imgavt: `https://graph.facebook.com/${t.id}/picture?height=1500&width=1500&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+						imgavt: `https://graph.facebook.com/${t.id}/picture?height=1500&width=1500&access_token=${global.account && global.account.accessToken ? global.account.accessToken : ''}`
 					}
 				};
 				return resolveFunc(dataUser);
