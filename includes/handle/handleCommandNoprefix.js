@@ -218,7 +218,8 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             await command.run(Obj);
             return;
         } catch (e) {
-            return api.sendMessage(`${e}`, threadID, (err) => {
+            console.error('Lỗi xảy ra:', e);
+            return api.sendMessage(`Đã xảy ra lỗi khi thực thi lệnh. Vui lòng thử lại sau.`, threadID, (err) => {
                 if (err) console.error(err);
             }, messageID);
         }

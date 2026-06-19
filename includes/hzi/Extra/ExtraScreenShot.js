@@ -134,13 +134,12 @@ const captureWebsite = async (input, options) => {
 		delay: 0,
 		debug: false,
 		darkMode: true,
-		launchOptions: { devtools:true },
+		launchOptions: { devtools: false },
 		_keepAlive: true,
 		isJavaScriptEnabled: true,
 		inset: 0,
-        args: ["--webview-disable-safebrowsing-support",
-        "--disable-web-security"],
-        ignoreHTTPSErrors: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        ignoreHTTPSErrors: false,
 		...options
 	};
 

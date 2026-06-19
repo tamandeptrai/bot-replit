@@ -6,7 +6,15 @@ const chalk1 = require('chalk');
 const app = express();
 const fs = require("fs");
 global.domainChess = `http://localhost:`
-app.use(cors());
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || origin === 'http://localhost' || origin.startsWith('http://localhost:')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
 app.use(express.json({ limit: '10mb' }));
 app.set("json spaces", 4);
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -341,6 +349,13 @@ function randomColor() {
     return Math.random() < 0.5 ? 'white' : 'black';
 }
 
+function sanitizeId(id) {
+    if (!id || typeof id !== 'string') return null;
+    return id.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+
+
 app.post("/api/key/:type", (req, res) => {
     const { type } = req.params;
     const { name, key } = req.query
@@ -381,7 +396,8 @@ app.post("/api/key/:type", (req, res) => {
 
 // API endpoint để di chuyển quân cờ
 app.post("/api/move/:id", (req, res) => {
-    const { id } = req.params;
+    const id = sanitizeId(req.params.id);
+    if (!id) return res.status(400).json({ status: false, message: "Invalid game ID" });
     const { from, to, promotion } = req.query;
 
     var promo = !promotion ? false : promotion;
@@ -390,7 +406,8 @@ app.post("/api/move/:id", (req, res) => {
 });
 
 app.get("/api/move/test/:id", (req, res) => {
-    const { id } = req.params;
+    const id = sanitizeId(req.params.id);
+    if (!id) return res.status(400).json({ status: false, message: "Invalid game ID" });
     const { from, to, promotion } = req.query;
 
     var promo = !promotion ? false : promotion;
@@ -399,7 +416,8 @@ app.get("/api/move/test/:id", (req, res) => {
 });
 
 app.get("/api/player/:id", (req, res) => {
-    const { id } = req.params;
+    const id = sanitizeId(req.params.id);
+    if (!id) return res.status(400).json({ status: false, message: "Invalid game ID" });
     const { player } = req.query
 
     const data = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -435,7 +453,8 @@ app.get("/api/player/:id", (req, res) => {
 
 // API endpoint để hiển thị trạng thái bàn cờ dựa trên trạng thái FEN
 app.post("/api/board/:id", async (req, res) => {
-    const { id } = req.params;
+    const id = sanitizeId(req.params.id);
+    if (!id) return res.status(400).json({ status: false, message: "Invalid game ID" });
     const data = JSON.parse(fs.readFileSync(path, 'utf8'));
     const foundIndex = data.find((item) => item.id === id);
     const imagePath = __dirname + `/chess/${id}.png`;
@@ -486,7 +505,8 @@ app.post("/api/board/:id", async (req, res) => {
 });
 ///////--------------TEST
 app.get("/api/board/:id", async (req, res) => {
-    const { id } = req.params;
+    const id = sanitizeId(req.params.id);
+    if (!id) return res.status(400).json({ status: false, message: "Invalid game ID" });
     const data = JSON.parse(fs.readFileSync(path, 'utf8'));
     const foundIndex = data.find((item) => item.id === id);
     const imagePath = __dirname + `/chess/${id}.png`;
@@ -533,7 +553,8 @@ app.get("/api/board/:id", async (req, res) => {
 
 ////////////------------------ END
 app.delete("/api/board/remove/:id", async (req, res) => {
-    const { id } = req.params;
+    const id = sanitizeId(req.params.id);
+    if (!id) return res.status(400).json({ status: false, message: "Invalid game ID" });
     const data = JSON.parse(fs.readFileSync(path, 'utf8'));
     var datas = data.find((item) => item.id === id);
     if (datas) {

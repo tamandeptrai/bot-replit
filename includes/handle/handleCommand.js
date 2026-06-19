@@ -250,14 +250,9 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             await command?.run(Obj);
             return;
         } catch (e) {
-            // In ra lỗi trong console để dễ dàng debug
             console.error('Lỗi xảy ra:', e);
 
-            // Nếu lỗi là đối tượng, chuyển nó thành chuỗi để gửi
-            let errorMessage = e instanceof Error ? e.stack || e.message : JSON.stringify(e);
-
-            // Gửi thông báo lỗi đến người dùng
-            return api.sendMessage(`${errorMessage}`, threadID, (err) => {
+            return api.sendMessage(`Đã xảy ra lỗi khi thực thi lệnh "${command.config.name}". Vui lòng thử lại sau.`, threadID, (err) => {
                 if (err) console.error('Lỗi khi gửi tin nhắn:', err);
             }, messageID);
         }
