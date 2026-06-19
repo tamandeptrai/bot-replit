@@ -30,6 +30,8 @@ const startBot = () => {
 
     child.on("error", (error) => {
         log(`Đã xảy ra lỗi: ${error.message}`, "[ Khởi động ]");
+        log("🔄 Đang thử khởi động lại sau lỗi spawn...", "[ Khởi động ]");
+        setTimeout(startBot, 3000);
     });
 };
 

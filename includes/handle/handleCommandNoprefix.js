@@ -21,7 +21,7 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             let thuebot;
             try {
                 thuebot = JSON.parse(require('fs-extra').readFileSync(process.cwd() + '/modules/data/thuebot.json'));
-            } catch {
+            } catch (e) {
                 thuebot = [];
             }
 
@@ -30,6 +30,7 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             // Kiểm tra nếu nhóm chưa thuê bot
             if (!find_thuebot) {
                 return api.sendMessage(`❎ Nhóm của bạn chưa thuê bot, vui lòng reply tin nhắn này và nhập key thuê bot hoặc liên hệ Admin để lấy key thuê bot\nfb: ${(!global.config.FACEBOOK_ADMIN) ? "Exclude Admin if not configured!" : global.config.FACEBOOK_ADMIN}`, event.threadID, (e, i) => {
+                    if (e) return console.error('[handleCommandNoprefix] Error sending rent message:', e);
                     global.client.handleReply.push({
                         name: 'rent',
                         messageID: i.messageID,
@@ -42,6 +43,7 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             // Kiểm tra thời gian thuê bot đã hết hạn chưa
             if (new Date(form_mm_dd_yyyy(find_thuebot.time_end)).getTime() <= Date.now() + 25200000) {
                 return api.sendMessage(`⚠️ Thời hạn sử dụng bot của nhóm bạn đã hết. Vui lòng reply tin nhắn này và nhập mã key mới, hoặc liên hệ Admin để được hỗ trợ.\nfb: ${(!global.config.FACEBOOK_ADMIN) ? "Exclude Admin if not configured!" : global.config.FACEBOOK_ADMIN}`, event.threadID, (e, i) => {
+                    if (e) return console.error('[handleCommandNoprefix] Error sending expired rent message:', e);
                     global.client.handleReply.push({
                         name: 'rent',
                         messageID: i.messageID,
@@ -81,6 +83,7 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
                 : `⛔ Hiện tại nhóm của bạn đang bị ban\nLý do: ${reason}\nAdmin: ${FACEBOOK_ADMIN}`;
 
             return api.sendMessage(message, threadID, async (err, info) => {
+                if (err) return console.error('[handleCommandNoprefix] Error sending ban message:', err);
                 await new Promise(resolve => setTimeout(resolve, 5 * 1000));
                 return api.unsendMessage(info.messageID);
             }, messageID);
@@ -138,11 +141,13 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
                     banUsers = commandBanned.get(senderID) || [];
                 if (banThreads.includes(command.config.name))
                     return api.sendMessage(global.getText("handleCommand", "commandThreadBanned", command.config.name), threadID, async (err, info) => {
+                        if (err) return console.error('[handleCommandNoprefix] Error sending thread ban message:', err);
                         await new Promise(resolve => setTimeout(resolve, 5 * 1000))
                         return api.unsendMessage(info.messageID);
                     }, messageID);
                 if (banUsers.includes(command.config.name))
                     return api.sendMessage(global.getText("handleCommand", "commandUserBanned", command.config.name), threadID, async (err, info) => {
+                        if (err) return console.error('[handleCommandNoprefix] Error sending user ban message:', err);
                         await new Promise(resolve => setTimeout(resolve, 5 * 1000));
                         return api.unsendMessage(info.messageID);
                     }, messageID);
@@ -218,8 +223,10 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
             await command.run(Obj);
             return;
         } catch (e) {
-            return api.sendMessage(`${e}`, threadID, (err) => {
-                if (err) console.error(err);
+            console.error(`[handleCommandNoprefix] Error in command ${command?.config?.name}:`, e);
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            return api.sendMessage(`${errorMessage}`, threadID, (err) => {
+                if (err) console.error('[handleCommandNoprefix] Error sending error message:', err);
             }, messageID);
         }
     }

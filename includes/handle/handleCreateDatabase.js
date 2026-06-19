@@ -1,12 +1,7 @@
+const logger = require("../../utils/log.js");
+
 module.exports = function ({ Users, Threads, Currencies }) {
     return async function (event) {
-        // const chalk = require('chalk');
-        // const brightGreen = chalk.bold.hex('#00ff7f');
-
-        // const logger = (prefix, message) => {
-        //     const msg = `${prefix}: ${message}`;
-        //     console.log(brightGreen(msg));
-        // };
 
         const { allUserID, allCurrenciesID, allThreadID, userName, threadInfo } = global.data;
         const { autoCreateDB } = global.config;
@@ -60,7 +55,7 @@ module.exports = function ({ Users, Threads, Currencies }) {
                                 });
                             }
                         } catch (e) {
-                            console.log(e);
+                            logger(`[handleCreateDatabase] Error creating/updating user ${singleData.id}: ${e.message || e}`, "error");
                         }
                     }
                 }
@@ -88,7 +83,8 @@ module.exports = function ({ Users, Threads, Currencies }) {
 
             return;
         } catch (err) {
-            return console.log(err);
+            logger(`[handleCreateDatabase] Error processing database for thread ${threadID}, sender ${senderID}: ${err.message || err}`, "error");
+            console.error('[handleCreateDatabase]', err);
         }
     };
 };

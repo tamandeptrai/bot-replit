@@ -5,6 +5,7 @@ module.exports = function ({  api, models }) {
 		try {
 			return (await api.getUserInfo(id))[id];
 		} catch (e) {
+			console.error(`[Users.getInfo] Error fetching info for user ${id}:`, e);
 			return false;
 		}
 	}
@@ -17,7 +18,8 @@ module.exports = function ({  api, models }) {
 				if (nameUser) return nameUser;
 				else return "Người dùng Facebook";
 			} else return "Người dùng Facebook";
-		} catch {
+		} catch (e) {
+			console.error(`[Users.getNameUser] Error fetching name for user ${id}:`, e);
 			return "Người dùng Facebook";
 		}
 	}

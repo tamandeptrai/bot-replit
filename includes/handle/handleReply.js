@@ -1,5 +1,5 @@
 module.exports = function ({ api, models, Users, Threads, Currencies }) {
-    return function (event ) {
+    return async function (event ) {
         if (!event.messageReply) return;
         const { handleReply, commands } = global.client
         const { messageID, threadID, messageReply } = event;
@@ -34,9 +34,10 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
                 Obj.handleReply = indexOfMessage
                 Obj.models = models
                 Obj.getText = getText2
-                handleNeedExec.handleReply(Obj);
+                await handleNeedExec.handleReply(Obj);
                 return;
             } catch (error) {
+                console.error(`[handleReply] Error in ${indexOfMessage.name}:`, error);
                 return api.sendMessage(global.getText('handleReply', 'executeError', error), threadID, messageID);
             }
         }
