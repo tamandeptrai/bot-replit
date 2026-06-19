@@ -1,9 +1,15 @@
+const logger = require("../../utils/log.js");
+
 module.exports = function ({ api, models, Users, Threads, Currencies }) {
     return async function (event) {
         const { threadID, logMessageType, logMessageData } = event;
         const { setData } = Threads;
+        try {
         let dataThread = (await Threads.getData(event.threadID)).threadInfo;
-        // console.log(event)
+        if (!dataThread) {
+            logger(`[handleRefresh] No thread data found for ${threadID}, skipping refresh`, "error");
+            return;
+        }
         switch (logMessageType) {
             case 'log:link-status': {
                 const { joinable_mode } = event.logMessageData;
@@ -127,6 +133,10 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
                 break;
             }
             default:
+        }
+        } catch (err) {
+            logger(`[handleRefresh] Error refreshing thread ${threadID} (${logMessageType}): ${err.message || err}`, "error");
+            console.error('[handleRefresh]', err);
         }
     }
 };

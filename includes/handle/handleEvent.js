@@ -29,12 +29,13 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
                 const eventRun = events.get(key);
                 try {
                     const Obj = { api, event, models, Users, Threads, Currencies };
-                    eventRun.run(Obj);
+                    await eventRun.run(Obj);
                     if (DeveloperMode) {
                         logger(global.getText('handleEvent', 'executeEvent', time, eventRun.config.name, threadID, Date.now() - timeStart), '[ Event ]');
                     }
                 } catch (error) {
                     logger(global.getText('handleEvent', 'eventError', eventRun.config.name, JSON.stringify(error)), "error");
+                    console.error(`[handleEvent] Error in event ${eventRun.config.name}:`, error);
                 }
             }
         }

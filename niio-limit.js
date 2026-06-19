@@ -1,8 +1,9 @@
-// process.on('uncaughtException', error => console.error('Unhandled Exception:', error));
-// process.on('unhandledRejection', (reason, promise) => {
-//     if (JSON.stringify(reason).includes("571927962827151")) console.log(`Lỗi khi get dữ liệu mới! khắc phục: hạn chế reset!!`)
-//     else console.error('Unhandled Rejection:', reason)
-// });
+process.on('uncaughtException', error => {
+    console.error('Unhandled Exception:', error);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 const moment = require("moment-timezone");
 const fs = require('fs');
 const logger = require("./utils/log");
@@ -153,24 +154,28 @@ function onBot({ models }) {
         ///// cứ chỉnh vớ vẩn có ngày bay ổ c=))
         function handleMqttEvents(error, message) {
             if (error) {
-                if (JSON.stringify(error).includes("XCheckpointFBScrapingWarningController") || JSON.stringify(error).includes("601051028565049")) {
+                const errorStr = JSON.stringify(error);
+                if (errorStr.includes("XCheckpointFBScrapingWarningController") || errorStr.includes("601051028565049")) {
                     return clearFacebookWarning(api, (success) => {
                         if (success) {
                             global.handleListen = api.listenMqtt(handleMqttEvents);
                             setTimeout(() => {
                                 global.mqttClient.end();
                                 connect_mqtt();
-                            }, 1000 * 60 * 60 * 3); // Đặt lại kết nối sau 3 giờ
+                            }, 1000 * 60 * 60 * 3);
                         }
                     });
+                } else if (errorStr.includes('Not logged in.')) {
+                    logger('Phiên đăng nhập đã hết hạn, thoát chương trình.', 'error');
+                    process.exit(0);
+                } else if (errorStr.includes('ECONNRESET')) {
+                    logger('Mất kết nối (ECONNRESET), đang kết nối lại...', 'error');
+                    global.mqttClient.end();
+                    api.listenMqtt(handleMqttEvents);
                 } else {
-                    return logger('Lỗi khi lắng nghe sự kiện: ' + JSON.stringify(error), 'error');
+                    return logger('Lỗi khi lắng nghe sự kiện: ' + errorStr, 'error');
                 }
-            } else if (JSON.stringify(error).includes('Not logged in.')) {
-                process.exit(0)
-            } else if (JSON.stringify(error).includes('ECONNRESET')) {
-                global.mqttClient.end();
-                api.listenMqtt(handleMqttEvents);
+                return;
             }
             if (message && !['presence', 'typ', 'read_receipt'].includes(message.type)) {
                 handleEvent(message);
@@ -301,6 +306,7 @@ function onBot({ models }) {
         botData.models = models;
         logger.autoLogin(onBot, botData);
     } catch (error) {
-        logger(`Kết nối đến cơ sở dữ liệu thất bại`, "[ DATABASE ] >");
+        logger(`Kết nối đến cơ sở dữ liệu thất bại: ${error.message || error}`, "[ DATABASE ] >");
+        process.exit(1);
     }
 })();

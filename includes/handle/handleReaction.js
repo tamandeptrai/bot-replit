@@ -34,9 +34,10 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
                 Obj.handleReaction = indexOfMessage
                 Obj.models= models 
                 Obj.getText = getText2
-                handleNeedExec.handleReaction(Obj);
+                await handleNeedExec.handleReaction(Obj);
                 return;
             } catch (error) {
+                console.error(`[handleReaction] Error in ${indexOfMessage.name}:`, error);
                 return api.sendMessage(global.getText('handleReaction', 'executeError', error), threadID, messageID);
             }
         }

@@ -28,5 +28,6 @@ module.exports = async (api, models, Users, Threads, Currencies) => {
         });
     } catch (error) {
         console.error('Lỗi khi tải dữ liệu môi trường:', error);
+        throw error;
     }
 };
