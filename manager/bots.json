@@ -1,0 +1,48 @@
+{
+  "bots": [
+    {
+      "id": "hhh",
+      "name": "Bot Ha Huy Hoang",
+      "type": "python",
+      "dir": "hhh-pycon/zalo-bot-master",
+      "entry": ["python", "bot.py"],
+      "config_py": "config.py",
+      "settings_json": null,
+      "prefix_in_config": true,
+      "ai_key": {"name": "GEMINI_API_KEY", "file": null}
+    },
+    {
+      "id": "betien",
+      "name": "Be Tien Cute",
+      "type": "python",
+      "dir": "betiencute/b\u00e9ti\u00eancute",
+      "entry": ["python", "main.py"],
+      "config_py": "config.py",
+      "settings_json": "seting.json",
+      "prefix_in_config": false,
+      "ai_key": {"name": "GEMINI_API_KEY", "file": "config.py"}
+    },
+    {
+      "id": "ksang",
+      "name": "LKS Bot (botksang)",
+      "type": "python",
+      "dir": "botksang/200ka/1/2/3",
+      "entry": ["python", "main.py"],
+      "config_py": "config.py",
+      "settings_json": "seting.json",
+      "prefix_in_config": false,
+      "ai_key": {"name": "GEMINI_API_KEY", "file": "config.py"}
+    },
+    {
+      "id": "whis",
+      "name": "Whis Bot (Node)",
+      "type": "node",
+      "dir": "Bot_Zalo_Version/Whis_BotZalo/Server Bot ES6/sele",
+      "entry": ["node", "index.js"],
+      "config_js": "config.js",
+      "cookie_txt": "cookie.txt",
+      "env_file": ".env",
+      "ai_key": {"name": "OPENAI_API_KEY", "file": ".env"}
+    }
+  ]
+}

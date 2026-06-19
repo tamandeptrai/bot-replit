@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zalo Bot Manager</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">Zalo Bot Manager
+        <small>Quan ly 4 bot Zalo &middot; QR login &middot; log &middot; auto-fix</small>
+      </div>
+      <div class="bot-list" id="botList"></div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar" id="topbar">
+        <h2 id="botName">Chon mot bot</h2>
+        <span class="badge stopped" id="statusBadge">-</span>
+        <span class="kv" id="pidInfo"></span>
+        <div class="spacer"></div>
+        <button class="green" id="btnStart">Bat</button>
+        <button class="red" id="btnStop">Tat</button>
+        <button id="btnRestart">Khoi dong lai</button>
+        <label class="switch"><input type="checkbox" id="autorestart" /> Tu sua loi</label>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="logs">Log</div>
+        <div class="tab" data-tab="commands">Lenh</div>
+        <div class="tab" data-tab="qr">Dang nhap QR</div>
+        <div class="tab" data-tab="settings">Cai dat</div>
+      </div>
+
+      <div class="content" id="content">
+        <div class="empty">Chon mot bot o cot ben trai de bat dau.</div>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
